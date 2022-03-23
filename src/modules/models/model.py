@@ -43,6 +43,8 @@ class VITS(nn.Module):
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
+        print(x_mask.size())
+        print(y_mask.size())
 
         x = self.encoder(x, x_mask)
         x = self.stat_proj(x) * x_mask
