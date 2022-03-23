@@ -2,10 +2,6 @@ import torch
 import torch.nn.functional as F
 
 
-def get_padding(kernel_size, dilation=1):
-    return int((kernel_size*dilation - dilation)/2)
-
-
 def slice_segments(x, ids_str, segment_size=4):
     ret = torch.zeros_like(x[..., :segment_size])
     for i in range(x.size(0)):
