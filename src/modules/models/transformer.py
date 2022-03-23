@@ -41,7 +41,7 @@ class TransformerLayer(nn.Module):
         y = self.drop(y)
         x = self.norm1(x + y)
 
-        y = self.ffn(x)
+        y = self.ffn(x, x_mask)
         y = self.drop(y)
         x = self.norm2(x + y)
         x = x * x_mask
