@@ -36,7 +36,10 @@ class Trainer:
     def run(self):
         seed_everything(self.config.seed)
 
-        csv_logger = CSVLogger(self.output_dir / 'logs/train.csv')
+        csv_loggers = {
+            'train': CSVLogger(self.output_dir / 'logs/train.csv'),
+            'valid': CSVLogger(self.output_dir / 'logs/valid.csv')
+        }
         tb_logger = SummaryWriter(log_dir=str(self.output_dir / 'logs'))
 
         train_dl, valid_dl = self.setup_data()
@@ -70,7 +73,7 @@ class Trainer:
                 tracker.update(**loss_dict)
                 bar.update()
                 self.set_losses(bar, tracker)
-            self.log(e, [csv_logger, tb_logger], tracker, mode='train')
+            self.log(e, [csv_loggers, tb_logger], tracker, mode='train')
             bar.close()
 
             g.eval()
@@ -83,7 +86,7 @@ class Trainer:
                 tracker.update(**loss_dict)
                 bar.update()
                 self.set_losses(bar, tracker)
-            self.log(e, [csv_logger, tb_logger], tracker, mode='valid')
+            self.log(e, [csv_loggers, tb_logger], tracker, mode='valid')
             bar.close()
 
             if (e + 1) % self.config.train.save_interval == 0:
