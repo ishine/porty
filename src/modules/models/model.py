@@ -15,6 +15,7 @@ from .utils import sequence_mask, generate_path, rand_slice_segments
 class VITS(nn.Module):
     def __init__(self, params):
         super(VITS, self).__init__()
+        self.segment_size = params.mel_segment
 
         self.emb = EmbeddingLayer(**params.embedding)
         self.encoder = Transformer(**params.encoder)
