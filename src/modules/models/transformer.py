@@ -88,10 +88,10 @@ class SelfAttention(nn.Module):
         key = key.view(B, self.n_heads, self.inter_channels, T).transpose(2, 3)
         value = value.view(B, self.n_heads, self.inter_channels, T).transpose(2, 3)
 
-        scores = torch.matmul(query / math.sqrt(self.k_channels), key.transpose(-2, -1))
+        scores = torch.matmul(query / self.scale, key.transpose(-2, -1))
         if self.window_size is not None:
             k_emb = self._get_relative_embeddings(self.emb_rel_k, T)
-            rel_logits = torch.matmul(query / math.sqrt(self.k_channels), k_emb.unsqueeze(0).transpose(-2, -1))
+            rel_logits = torch.matmul(query / self.scale, k_emb.unsqueeze(0).transpose(-2, -1))
             scores_local = self._relative_position_to_absolute_position(rel_logits)
             scores = scores + scores_local
         if mask is not None:
