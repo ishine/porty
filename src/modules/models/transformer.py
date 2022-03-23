@@ -33,6 +33,7 @@ class TransformerLayer(nn.Module):
         self.norm1 = LayerNorm(channels)
         self.ffn = FFN(channels, kernel_size, dropout)
         self.norm2 = LayerNorm(channels)
+        self.drop = nn.Dropout(dropout)
 
     def forward(self, x, x_mask):
         attn_mask = x_mask.unsqueeze(2) * x_mask.unsqueeze(-1)
