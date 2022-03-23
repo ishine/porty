@@ -47,6 +47,7 @@ class VITS(nn.Module):
         x = self.encoder(x, x_mask)
         x = self.stat_proj(x) * x_mask
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
+        print(attn_mask.size())
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
         x, (dur_pred, pitch_pred, energy_pred) = self.va(
             x,
