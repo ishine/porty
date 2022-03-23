@@ -8,7 +8,7 @@ from torch.optim.lr_scheduler import ExponentialLR
 from torch.utils.data import Subset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from .models.model import VITS
+from .models import VITS
 from .models.gan import MultiPeriodDiscriminator
 from .models.loss import discriminator_loss, generator_loss, fm_loss
 from .models.utils import slice_segments

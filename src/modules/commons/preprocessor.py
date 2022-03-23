@@ -15,7 +15,7 @@ ORIG_SR = None
 NEW_SR = None
 
 
-class NormalPreProcessor:
+class PreProcessor:
 
     def __init__(self, config):
         self.wav_dir = Path(config.wav_dir)
