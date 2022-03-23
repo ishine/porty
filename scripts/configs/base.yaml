@@ -71,15 +71,15 @@ model:
     channels: ${model.channels}
     kernel_size: 5
     dilation_rate: 1
-    num_layers: 4
-    num_flows: 6
+    n_layers: 4
+    n_flows: 6
 
   posterior_encoder:
     in_channels: ${model.n_spec}
     out_channels: ${model.channels}
     kernel_size: 5
     dilation_rate: 1
-    num_layers: 16
+    n_layers: 16
 
   generator:
     initial_channel: ${model.channels}

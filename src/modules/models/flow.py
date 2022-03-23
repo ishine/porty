@@ -9,13 +9,13 @@ class Flow(nn.Module):
                  channels,
                  kernel_size,
                  dilation_rate,
-                 num_layers,
-                 num_flows=6):
+                 n_layers,
+                 n_flows=6):
         super().__init__()
 
         self.flows = nn.ModuleList()
-        for i in range(num_flows):
-            self.flows.append(ResidualCouplingLayer(channels, kernel_size, dilation_rate, num_layers))
+        for i in range(n_flows):
+            self.flows.append(ResidualCouplingLayer(channels, kernel_size, dilation_rate, n_layers))
             self.flows.append(Flip())
 
     def forward(self, x, x_mask):
