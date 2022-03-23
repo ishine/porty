@@ -53,6 +53,7 @@ class SelfAttention(nn.Module):
         assert channels % n_heads == 0
 
         self.inter_channels = channels // n_heads
+        self.n_heads = n_heads
         self.window_size = window_size
         self.scale = math.sqrt(self.inter_channels)
 
