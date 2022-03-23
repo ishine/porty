@@ -21,6 +21,7 @@ class Flow(nn.Module):
     def forward(self, x, x_mask):
         for flow in self.flows:
             x = flow(x, x_mask)
+        return x
 
     def backward(self, x, x_mask):
         for flow in reversed(self.flows):
@@ -34,7 +35,6 @@ class Flow(nn.Module):
 
 class Flip(nn.Module):
     def forward(self, x, x_mask):
-        print(x)
         x = torch.flip(x, dims=[1])
         return x
 
@@ -73,7 +73,7 @@ class ResidualCouplingLayer(nn.Module):
 
         x1 = m + x1 * torch.exp(logs) * x_mask
         x = torch.cat([x0, x1], dim=1)
-        return x,
+        return x
 
     def backward(self, x, x_mask):
         x0, x1 = torch.split(x, [self.half_channels] * 2, 1)
