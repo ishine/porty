@@ -63,7 +63,7 @@ class SelfAttention(nn.Module):
         self.drop = nn.Dropout(dropout)
 
         if window_size is not None:
-            rel_stddev = self.k_channels ** -0.5
+            rel_stddev = self.inter_channels ** -0.5
             self.emb_rel_k = nn.Parameter(torch.randn(1, self.inter_channels, window_size * 2 + 1) * rel_stddev)
             self.emb_rel_v = nn.Parameter(torch.randn(1, self.inter_channels, window_size * 2 + 1) * rel_stddev)
 
