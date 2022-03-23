@@ -91,6 +91,7 @@ class SelfAttention(nn.Module):
         scores = torch.matmul(query.transpose(-2, -1) / self.scale, key)
         if self.window_size is not None:
             k_emb = self._get_relative_embeddings(self.emb_rel_k, T)
+            print(query.size(), k_emb.unsqueeze(0).size())
             rel_logits = torch.matmul(query.transpose(-2, -1) / self.scale, k_emb.unsqueeze(0))
             scores_local = self._relative_position_to_absolute_position(rel_logits)
             scores = scores + scores_local
