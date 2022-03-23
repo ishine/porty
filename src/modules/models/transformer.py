@@ -133,6 +133,17 @@ class SelfAttention(nn.Module):
         x_final = x_flat.view([B, H, L + 1, 2 * L - 1])[:, :, :L, L - 1:]
         return x_final
 
+    def _absolute_position_to_relative_position(self, x):
+        batch, heads, length, _ = x.size()
+        # padd along column
+        x = F.pad(x, convert_pad_shape([[0, 0], [0, 0], [0, 0], [0, length - 1]]))
+        x_flat = x.view([batch, heads, length ** 2 + length * (length - 1)])
+        # add 0's in the beginning that will skew the elements after reshape
+        x_flat = F.pad(x_flat, convert_pad_shape([[0, 0], [0, 0], [length, 0]]))
+        x_final = x_flat.view([batch, heads, length, 2 * length])[:, :, :, 1:]
+        return x_final
+
+
 class FFN(nn.Module):
     def __init__(self, channels, kernel_size, dropout):
         super(FFN, self).__init__()
