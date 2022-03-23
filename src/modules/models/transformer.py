@@ -72,10 +72,10 @@ class SelfAttention(nn.Module):
         nn.init.xavier_uniform_(self.conv_k.weight)
         nn.init.xavier_uniform_(self.conv_v.weight)
 
-    def forward(self, x, c, attn_mask=None):
+    def forward(self, x, attn_mask=None):
         q = self.conv_q(x)
-        k = self.conv_k(c)
-        v = self.conv_v(c)
+        k = self.conv_k(x)
+        v = self.conv_v(x)
 
         x = self.attention(q, k, v, mask=attn_mask)
 
