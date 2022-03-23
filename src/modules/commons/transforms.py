@@ -5,7 +5,7 @@ import torchaudio
 class Spectrogram(torchaudio.transforms.Spectrogram):
     def forward(self, waveform):
         spec = super(Spectrogram, self).forward(waveform)
-        spec = torch.log(torch.clamp(spec, min=1e-5))
+        # spec = torch.log(torch.clamp(spec, min=1e-5))
         return spec
 
 
