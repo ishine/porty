@@ -34,6 +34,7 @@ class Flow(nn.Module):
 
 class Flip(nn.Module):
     def forward(self, x, x_mask):
+        print(x)
         x = torch.flip(x, dims=[1])
         return x
 

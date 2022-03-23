@@ -43,13 +43,10 @@ class VITS(nn.Module):
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
-        print(x_mask.size())
-        print(y_mask.size())
 
         x = self.encoder(x, x_mask)
         x = self.stat_proj(x) * x_mask
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
-        print(attn_mask.size())
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
         x, (dur_pred, pitch_pred, energy_pred) = self.va(
             x,
