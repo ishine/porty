@@ -42,6 +42,8 @@ class WN(torch.nn.Module):
     def __init__(self, hidden_channels, kernel_size, dilation_rate, n_layers, p_dropout=0):
         super(WN, self).__init__()
         assert (kernel_size % 2 == 1)
+        self.hidden_channels = hidden_channels
+        self.n_layers = n_layers
 
         self.in_layers = torch.nn.ModuleList()
         self.res_skip_layers = torch.nn.ModuleList()
