@@ -3,8 +3,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from torch.nn.utils import weight_norm, remove_weight_norm
-
 
 LRELU_SLOPE = 0.1
 
