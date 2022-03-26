@@ -86,8 +86,6 @@ class WN(torch.nn.Module):
         return output * x_mask
 
     def remove_weight_norm(self):
-        if self.gin_channels != 0:
-            torch.nn.utils.remove_weight_norm(self.cond_layer)
         for l in self.in_layers:
             torch.nn.utils.remove_weight_norm(l)
         for l in self.res_skip_layers:
