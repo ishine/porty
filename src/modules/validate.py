@@ -20,14 +20,15 @@ def validate(args, config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = VITS(config.model)
     ckpt = torch.load(args.ckpt_path)
-    model.load_state_dict(ckpt['g'])
+    model.load_state_dict(ckpt['g'], remove_wn=True)
     model = model.eval().to(device)
 
     data_dir = Path(config.data.data_dir)
     data_list = list(sorted(data_dir.glob('*.pt')))[:config.data.valid_size]
 
     tokenizer = Tokenizer()
-    to_mel = MelSpectrogram()
+    to_mel = MelSpectrogram(**config.mel)
+    stats = torch.load(data_dir / 'stat.pt')
 
     def save_fig(gen, gt, path):
         plt.figure(figsize=(14, 7))
@@ -51,6 +52,20 @@ def validate(args, config):
             SR
         )
 
+    def save_comp(x, y, path):
+        plt.figure(figsize=(10, 7))
+        plt.subplot(211)
+        plt.gca().title.set_text('GEN')
+        plt.plot(x)
+        plt.subplot(212)
+        plt.gca().title.set_text('GT')
+        plt.plot(y)
+        plt.savefig(path)
+        plt.close()
+
+    def denormalize(x, mean, std):
+        return x * std + mean
+
     for i, p in tqdm(enumerate(data_list), total=len(data_list)):
         d = output_dir / f'res_{i+1:04d}'
         d.mkdir(exist_ok=True)
@@ -58,17 +73,21 @@ def validate(args, config):
             wav,
             spec,
             mel,
-            label,
-            *_
+            inputs,
+            _,
+            pitch,
+            energy
         ) = torch.load(p)
-        x = tokenizer(label)
-        length = torch.LongTensor([len(label)])
+        x = tokenizer(inputs)
+        length = torch.LongTensor([len(inputs)])
 
         x = x.unsqueeze(0).to(device)
         length = length.to(device)
 
         with torch.no_grad():
-            w = model([x, length])
+            w, (pitch_pred, energy_pred) = model([x, length])
+            pitch_pred = denormalize(pitch_pred, stats['pitch_mean'], stats['pitch_std'])
+            energy_pred = denormalize(energy_pred, stats['energy_mean'], stats['energy_std'])
             w = w.squeeze(1).detach().cpu()
         m = to_mel(w).squeeze(0)
 
@@ -76,3 +95,5 @@ def validate(args, config):
         save_wav(w, d / f'gen.wav')
 
         save_fig(m, mel, d / f'mel_gan.png')
+        save_comp(pitch_pred, pitch, d / f'pitch.png')
+        save_comp(energy_pred, energy, d / f'energy.png')

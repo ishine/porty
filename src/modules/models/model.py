@@ -26,7 +26,20 @@ class VITS(nn.Module):
         self.generator = Generator(**params.generator)
 
     def forward(self, inputs):
-        pass
+        label, x_length = inputs
+        x = self.emb(label)
+        x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
+
+        x = self.encoder(x, x_mask)
+        x = self.stat_proj(x) * x_mask
+
+        x, y_mask, preds = self.va.infer(x, x_mask)
+
+        m, logs = torch.chunk(x, 2, dim=1)
+        z_p = (m + torch.randn_like(m) * torch.exp(logs)) * x_mask
+        z = self.flow.backward(z_p, y_mask)
+        y = self.generator(z)
+        return y, preds
 
     def compute_loss(self, batch):
         (

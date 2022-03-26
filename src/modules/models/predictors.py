@@ -63,7 +63,7 @@ class VarianceAdopter(nn.Module):
         energy = self.energy_predictor(x, y_mask)
 
         x += pitch + energy
-        return x, y_mask
+        return x, y_mask, (pitch, energy)
 
 
 class VariancePredictor(nn.Module):
