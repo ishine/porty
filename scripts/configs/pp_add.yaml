@@ -18,15 +18,15 @@ spec:
   center: false
 
 mel:
-  sample_rate: 24000
-  n_fft: 1024
-  win_length: 1024
-  hop_length: 256
+  sample_rate: ${preprocess.new_sr}
+  n_fft: ${spec.n_fft}
+  win_length: ${spec.win_length}
+  hop_length: ${spec.hop_length}
   f_min: 0
   f_max: 8000
-  pad: 384
+  pad: ${spec.pad}
   n_mels: 80
-  center: false
+  center: ${spec.center}
 
 train:
   batch_size: 16
@@ -39,7 +39,7 @@ data:
   valid_size: 100
 
 model:
-  n_mel: 80
+  n_mel: ${mel.n_mels}
   n_spec: 513
   channels: 192
   segment_size: 8192
@@ -76,6 +76,10 @@ model:
     kernel_size: 5
     dilation_rate: 1
     n_layers: 16
+
+  signal_generator:
+    sr: ${preprocess.new_sr}
+    frame_shift: ${spec.hop_length}
 
   generator:
     initial_channel: ${model.channels}
