@@ -69,9 +69,8 @@ class ResidualCouplingLayer(nn.Module):
         stats = self.post(h) * x_mask
 
         m = stats
-        logs = torch.zeros_like(m)
 
-        x1 = m + x1 * torch.exp(logs) * x_mask
+        x1 = (m + x1) * x_mask
         x = torch.cat([x0, x1], dim=1)
         return x
 
@@ -82,8 +81,7 @@ class ResidualCouplingLayer(nn.Module):
         stats = self.post(h) * x_mask
 
         m = stats
-        logs = torch.zeros_like(m)
-        x1 = (x1 - m) * torch.exp(-logs) * x_mask
+        x1 = (x1 - m) * x_mask
         x = torch.cat([x0, x1], dim=1)
         return x
 
