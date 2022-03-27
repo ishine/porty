@@ -78,7 +78,7 @@ class ResidualCouplingLayer(nn.Module):
     def backward(self, x, x_mask):
         x0, x1 = torch.split(x, [self.half_channels] * 2, 1)
         h = self.pre(x0) * x_mask
-        h = self.enc(h, x_mask, g=g)
+        h = self.enc(h, x_mask)
         stats = self.post(h) * x_mask
 
         m = stats
