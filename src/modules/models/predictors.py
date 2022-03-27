@@ -42,8 +42,8 @@ class VarianceAdopter(nn.Module):
     ):
         dur_pred = torch.relu(self.duration_predictor(x.detach(), x_mask))
         x = self.length_regulator(x, path)
-        pitch_pred = self.pitch_predictor(x.detach(), y_mask)
-        energy_pred = self.energy_predictor(x.detach(), y_mask)
+        pitch_pred = self.pitch_predictor(x, y_mask)
+        energy_pred = self.energy_predictor(x, y_mask)
 
         x = x + pitch + energy
         return x, (dur_pred, pitch_pred, energy_pred)
@@ -59,11 +59,11 @@ class VarianceAdopter(nn.Module):
 
         x = self.length_regulator(x, path)
 
-        pitch = self.pitch_predictor(x, y_mask)
+        pitch, vuv = self.pitch_predictor(x, y_mask)
         energy = self.energy_predictor(x, y_mask)
 
         x = x + pitch + energy
-        return x, y_mask, (pitch, energy)
+        return x, y_mask, (pitch, vuv, energy)
 
     def remove_weight_norm(self):
         self.pitch_predictor.remove_weight_norm()
@@ -75,12 +75,14 @@ class F0Predictor(nn.Module):
         self.in_conv = nn.Conv1d(in_channels, channels, 1)
         self.enc = WN(channels, kernel_size, dilation_rate=1, n_layers=n_layers, p_dropout=dropout)
         self.out_conv = nn.Conv1d(channels, 1, 1)
+        self.clf = nn.Conv1d(channels, 1, 1)
 
     def forward(self, x, x_mask):
         x = self.in_conv(x) * x_mask
         x = self.enc(x, x_mask)
         x = self.out_conv(x) * x_mask
-        return x
+        vuv = self.clf(x) * x_mask
+        return x, vuv
 
     def remove_weight_norm(self):
         self.enc.remove_weight_norm()

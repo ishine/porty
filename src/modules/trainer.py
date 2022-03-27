@@ -101,10 +101,7 @@ class Trainer:
             wav,
             _,
             mel,
-            _,
-            _,
-            _,
-            _
+            *_
         ) = batch
         y_hat, ids_slice, loss_dict = g.compute_loss(batch)
         y_mel = slice_segments(mel, ids_slice, segment_size=self.config.model.mel_segment)
