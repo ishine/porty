@@ -42,11 +42,11 @@ class VarianceAdopter(nn.Module):
     ):
         dur_pred = torch.relu(self.duration_predictor(x.detach(), x_mask))
         x = self.length_regulator(x, path)
-        pitch_pred = self.pitch_predictor(x, y_mask)
+        pitch_pred, vuv = self.pitch_predictor(x, y_mask)
         energy_pred = self.energy_predictor(x, y_mask)
 
         x = x + pitch + energy
-        return x, (dur_pred, pitch_pred, energy_pred)
+        return x, (dur_pred, pitch_pred, vuv, energy_pred)
 
     def infer(self, x, x_mask):
         dur_pred = torch.relu(self.duration_predictor(x, x_mask))
@@ -81,7 +81,7 @@ class F0Predictor(nn.Module):
         x = self.in_conv(x) * x_mask
         x = self.enc(x, x_mask)
         x = self.out_conv(x) * x_mask
-        vuv = self.clf(x) * x_mask
+        vuv = torch.sigmoid(self.clf(x)) * x_mask
         return x, vuv
 
     def remove_weight_norm(self):

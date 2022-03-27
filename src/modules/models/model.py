@@ -65,7 +65,7 @@ class VITS(nn.Module):
         x = self.encoder(x, x_mask)
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
-        x, (dur_pred, pitch_pred, vuv, energy_pred) = self.va(
+        x, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
             x,
             x_mask,
             y_mask,
@@ -83,9 +83,9 @@ class VITS(nn.Module):
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
         duration_loss = ((dur_pred - duration.add(1e-5).log()) * x_mask).pow(2).sum() / torch.sum(x_length)
         pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
-        vuv_loss = F.binary_cross_entropy_with_logits(vuv, (pitch != 0).float())
+        vuv_loss = F.binary_cross_entropy(vuv_pred, vuv)
         energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)
-        loss = _kl_loss + duration_loss + pitch_loss + vuv_loss + energy_loss
+        loss = _kl_loss + duration_loss + pitch_loss + vuv_loss + vuv_loss + energy_loss
 
         loss_dict = dict(
             loss=loss,
