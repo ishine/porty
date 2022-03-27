@@ -34,9 +34,9 @@ class VITS(nn.Module):
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        x = self.stat_proj(x) * x_mask
-
         x, y_mask, preds = self.va.infer(x, x_mask)
+        x = self.decoder(x, y_mask)
+        x = self.stat_proj(x) * y_mask
 
         m, logs = torch.chunk(x, 2, dim=1)
         z_p = (m + torch.randn_like(m) * torch.exp(logs)) * y_mask
