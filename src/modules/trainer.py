@@ -13,7 +13,7 @@ from .models.gan import MultiPeriodDiscriminator
 from .models.loss import discriminator_loss, generator_loss, fm_loss
 from .models.utils import slice_segments
 from .commons.csv_logger import CSVLogger
-from .commons.utils import Tracker, seed_everything, seed_worker
+from .commons.utils import Tracker, seed_everything
 from .commons.dataset import AudioDataset, collate_fn
 from .commons.transforms import MelSpectrogram
 
@@ -158,7 +158,6 @@ class Trainer:
             shuffle=True,
             num_workers=8,
             collate_fn=collate_fn,
-            worker_init_fn=seed_worker
         )
         valid_ds = Subset(ds, list(range(self.config.data.valid_size)))
         valid_dl = DataLoader(
@@ -167,7 +166,6 @@ class Trainer:
             shuffle=False,
             num_workers=8,
             collate_fn=collate_fn,
-            worker_init_fn=seed_worker
         )
         return train_dl, valid_dl
 
