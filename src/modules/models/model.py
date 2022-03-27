@@ -36,7 +36,7 @@ class VITS(nn.Module):
         x, y_mask, preds = self.va.infer(x, x_mask)
 
         m, logs = torch.chunk(x, 2, dim=1)
-        z_p = (m + torch.randn_like(m) * torch.exp(logs)) * x_mask
+        z_p = (m + torch.randn_like(m) * torch.exp(logs)) * y_mask
         z = self.flow.backward(z_p, y_mask)
         y = self.generator(z)
         return y, preds
