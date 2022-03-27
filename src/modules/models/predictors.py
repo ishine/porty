@@ -19,7 +19,7 @@ class VarianceAdopter(nn.Module):
         self.pitch_predictor = F0Predictor(
             in_channels=in_channels,
             channels=channels,
-            n_layers=6,
+            n_layers=5,
             kernel_size=5,
             dropout=dropout
         )
