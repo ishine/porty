@@ -66,6 +66,7 @@ def collate_fn(batch):
     pitch = pad_sequence(pitch, batch_first=True).transpose(-1, -2)
     energy = pad_sequence(energy, batch_first=True).transpose(-1, -2)
     duration = pad_sequence(duration, batch_first=True).transpose(-1, -2)
+    print(pitch.dtype)
 
     return (
         phoneme, accent,
