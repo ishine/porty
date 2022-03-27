@@ -95,10 +95,3 @@ class VITS(nn.Module):
 
         return o, ids_slice, loss_dict
 
-    def load_state_dict(self, state_dict: 'OrderedDict[str, Tensor]',
-                        strict: bool = True, remove_wn: bool = True):
-        super(VITS, self).load_state_dict(state_dict, strict)
-        self.flow.remove_weight_norm()
-        self.posterior_encoder.remove_weight_norm()
-        self.generator.remove_weight_norm()
-

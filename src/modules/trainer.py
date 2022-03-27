@@ -54,7 +54,7 @@ class Trainer:
         if (self.output_dir / 'last.ckpt').exists():
             c = torch.load(self.output_dir / 'last.ckpt')
             start_epoch = c['epoch'] + 1
-            g.load_state_dict(c['g'], remove_wn=False)
+            g.load_state_dict(c['g'])
             d.load_state_dict(c['d'])
             opt_g.load_state_dict(c['opt_g'])
             opt_d.load_state_dict(c['opt_d'])

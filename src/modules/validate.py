@@ -20,7 +20,7 @@ def validate(args, config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = VITS(config.model)
     ckpt = torch.load(args.ckpt_path)
-    model.load_state_dict(ckpt['g'], remove_wn=True)
+    model.load_state_dict(ckpt['g'])
     model = model.eval().to(device)
 
     data_dir = Path(config.data.data_dir)
