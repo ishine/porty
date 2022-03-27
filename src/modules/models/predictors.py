@@ -60,6 +60,7 @@ class VarianceAdopter(nn.Module):
         x = self.length_regulator(x, path)
 
         pitch, vuv = self.pitch_predictor(x, y_mask)
+        pitch = pitch * vuv
         energy = self.energy_predictor(x, y_mask)
 
         x = x + pitch + energy
@@ -80,9 +81,10 @@ class F0Predictor(nn.Module):
     def forward(self, x, x_mask):
         x = self.in_conv(x) * x_mask
         x = self.enc(x, x_mask)
-        x = self.out_conv(x) * x_mask
+        pitch = self.out_conv(x) * x_mask
         vuv = torch.sigmoid(self.clf(x)) * x_mask
-        return x, vuv
+        pitch = pitch * vuv
+        return pitch, vuv
 
     def remove_weight_norm(self):
         self.enc.remove_weight_norm()

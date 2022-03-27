@@ -30,7 +30,6 @@ class AudioDataset(Dataset):
         phoneme, accent = self.tokenizer(inputs)
         duration = duration.float()
         vuv = (pitch != 0).float()
-        print(vuv)
         pitch = (pitch - self.stats['pitch_mean']) / self.stats['pitch_std']
         energy = (energy - self.stats['energy_mean']) / self.stats['energy_std']
         return (
