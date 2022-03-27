@@ -1,5 +1,5 @@
 seed: 42
-output_dir: ./out/base
+output_dir: ./out/pp_add
 
 preprocess:
   wav_dir: /disk/fs1/Corpus/JSUT/jsut_ver1.1/basic5000/wav
