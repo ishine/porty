@@ -61,7 +61,7 @@ model:
   va:
     in_channels: ${model.channels}
     channels: 256
-    dropout: 0.2
+    dropout: 0.5
 
   flow:
     channels: ${model.channels}
