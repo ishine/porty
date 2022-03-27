@@ -45,7 +45,7 @@ class VarianceAdopter(nn.Module):
         pitch_pred = self.pitch_predictor(x.detach(), y_mask)
         energy_pred = self.energy_predictor(x.detach(), y_mask)
 
-        x += pitch + energy
+        x = x + pitch + energy
         return x, (dur_pred, pitch_pred, energy_pred)
 
     def infer(self, x, x_mask):
@@ -62,7 +62,7 @@ class VarianceAdopter(nn.Module):
         pitch = self.pitch_predictor(x, y_mask)
         energy = self.energy_predictor(x, y_mask)
 
-        x += pitch + energy
+        x = x + pitch + energy
         return x, y_mask, (pitch, energy)
 
     def remove_weight_norm(self):

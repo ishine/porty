@@ -59,7 +59,7 @@ model:
     window_size: 4
 
   va:
-    in_channels: 384
+    in_channels: ${model.channels}
     channels: 256
     dropout: 0.2
 
