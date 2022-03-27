@@ -19,8 +19,10 @@ class VITS(nn.Module):
 
         self.emb = EmbeddingLayer(**params.embedding)
         self.encoder = Transformer(**params.encoder)
-        self.stat_proj = nn.Conv1d(params.encoder.channels, params.encoder.channels * 2, 1)
         self.va = VarianceAdopter(**params.va)
+        self.decoder = Transformer(**params.encoder)
+        self.stat_proj = nn.Conv1d(params.encoder.channels, params.encoder.channels * 2, 1)
+
         self.flow = Flow(**params.flow)
         self.posterior_encoder = PosteriorEncoder(**params.posterior_encoder)
         self.generator = Generator(**params.generator)
@@ -43,7 +45,7 @@ class VITS(nn.Module):
 
     def compute_loss(self, batch):
         (
-            label,
+            phoneme, accent,
             x_length,
             _,
             spec,
@@ -53,7 +55,7 @@ class VITS(nn.Module):
             pitch,
             energy
         ) = batch
-        x = self.emb(label)
+        x = self.emb(phoneme, accent)
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
@@ -76,8 +78,7 @@ class VITS(nn.Module):
         z_p = self.flow(z, y_mask)
 
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
-        duration_mask = (duration != 0).float()
-        duration_loss = ((dur_pred - duration.add(1e-5).log()) * duration_mask).pow(2).sum() / torch.sum(x_length)
+        duration_loss = ((dur_pred - duration.add(1e-5).log()) * x_mask).pow(2).sum() / torch.sum(x_length)
         pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
         energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)
         loss = _kl_loss + duration_loss + pitch_loss + energy_loss
@@ -97,8 +98,9 @@ class VITS(nn.Module):
 
     def load_state_dict(self, state_dict: 'OrderedDict[str, Tensor]',
                         strict: bool = True, remove_wn: bool = True):
-        self.flow.remove_weight_norm()
-        self.posterior_encoder.remove_weight_norm()
-        self.generator.remove_weight_norm()
         super(VITS, self).load_state_dict(state_dict, strict)
-
+        if remove_wn:
+            self.va.remove_weight_norm()
+            self.flow.remove_weight_norm()
+            self.posterior_encoder.remove_weight_norm()
+            self.generator.remove_weight_norm()

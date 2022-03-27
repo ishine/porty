@@ -8,16 +8,20 @@ LRELU_SLOPE = 0.1
 
 
 class EmbeddingLayer(nn.Module):
-    def __init__(self, n_phoneme, channels):
+    def __init__(self, n_phoneme, n_prosody, channels):
         super(EmbeddingLayer, self).__init__()
         self.scale = math.sqrt(channels)
 
-        self.emb = nn.Embedding(n_phoneme, channels)
-        nn.init.normal_(self.emb.weight, 0.0, channels ** -0.5)
+        self.phoneme_emb = nn.Embedding(n_phoneme, channels)
+        nn.init.normal_(self.phoneme_emb.weight, 0.0, channels ** -0.5)
 
-    def forward(self, x):
-        x = self.emb(x) * self.scale
-        x = x.transpose(-1, -2)
+        self.prosody_emb = nn.Embedding(n_prosody, channels)
+        nn.init.normal_(self.prosody_emb.weight, 0.0, channels ** -0.5)
+
+    def forward(self, phoneme, prosody):
+        phoneme = self.phoneme_emb(phoneme) * self.scale
+        prosody = self.prosody_emb(prosody) * self.scale
+        x = (phoneme + prosody).transpose(-1, -2)
         return x
 
 

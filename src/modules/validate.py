@@ -20,7 +20,7 @@ def validate(args, config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = VITS(config.model)
     ckpt = torch.load(args.ckpt_path)
-    model.load_state_dict(ckpt['g'])
+    model.load_state_dict(ckpt['g'], remove_wn=True)
     model = model.eval().to(device)
 
     data_dir = Path(config.data.data_dir)
@@ -28,7 +28,7 @@ def validate(args, config):
 
     tokenizer = Tokenizer()
     to_mel = MelSpectrogram(**config.mel)
-    stats = torch.load(data_dir / 'stat.pt')
+    stats = torch.load(data_dir / 'stats.pt')
 
     def save_fig(gen, gt, path):
         plt.figure(figsize=(14, 7))
@@ -54,11 +54,7 @@ def validate(args, config):
 
     def save_comp(x, y, path):
         plt.figure(figsize=(10, 7))
-        plt.subplot(211)
-        plt.gca().title.set_text('GEN')
         plt.plot(x)
-        plt.subplot(212)
-        plt.gca().title.set_text('GT')
         plt.plot(y)
         plt.savefig(path)
         plt.close()

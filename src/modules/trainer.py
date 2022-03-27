@@ -54,7 +54,7 @@ class Trainer:
         if (self.output_dir / 'last.ckpt').exists():
             c = torch.load(self.output_dir / 'last.ckpt')
             start_epoch = c['epoch'] + 1
-            g.load_state_dict(c['g'])
+            g.load_state_dict(c['g'], remove_wn=False)
             d.load_state_dict(c['d'])
             opt_g.load_state_dict(c['opt_g'])
             opt_d.load_state_dict(c['opt_d'])
@@ -96,7 +96,7 @@ class Trainer:
     def handle_batch_gan(self, g, d, opt_g, opt_d, sche_g, sche_d, batch, train=True):
         batch = [b.to(self.device) for b in batch]
         (
-            _,
+            _, _,
             _,
             wav,
             _,

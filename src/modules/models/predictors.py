@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from .layers import LayerNorm
+from .layers import LayerNorm, WN
 from .utils import sequence_mask, generate_path
 
 
@@ -16,10 +16,10 @@ class VarianceAdopter(nn.Module):
             dropout=dropout
         )
         self.length_regulator = LengthRegulator()
-        self.pitch_predictor = VariancePredictor(
+        self.pitch_predictor = F0Predictor(
             in_channels=in_channels,
             channels=channels,
-            n_layers=5,
+            n_layers=6,
             kernel_size=5,
             dropout=dropout
         )
@@ -45,7 +45,7 @@ class VarianceAdopter(nn.Module):
         pitch_pred = self.pitch_predictor(x.detach(), y_mask)
         energy_pred = self.energy_predictor(x.detach(), y_mask)
 
-        # x += pitch + energy
+        x += pitch + energy
         return x, (dur_pred, pitch_pred, energy_pred)
 
     def infer(self, x, x_mask):
@@ -62,8 +62,33 @@ class VarianceAdopter(nn.Module):
         pitch = self.pitch_predictor(x, y_mask)
         energy = self.energy_predictor(x, y_mask)
 
-        # x += pitch + energy
+        x += pitch + energy
         return x, y_mask, (pitch, energy)
+
+    def remove_weight_norm(self):
+        self.pitch_predictor.remove_weight_norm()
+
+
+class F0Predictor(nn.Module):
+    def __init__(self, in_channels, channels, n_layers, kernel_size, dropout):
+        super(F0Predictor, self).__init__()
+        self.in_conv = nn.Sequential(
+            nn.Conv1d(in_channels, channels, kernel_size, padding=kernel_size // 2),
+            LayerNorm(channels),
+            nn.GELU(),
+            nn.Dropout(dropout)
+        )
+        self.enc = WN(channels, kernel_size, dilation_rate=1, n_layers=n_layers, p_dropout=dropout)
+        self.out_conv = nn.Conv1d(channels, 1, 1)
+
+    def forward(self, x, x_mask):
+        x = self.in_conv(x) * x_mask
+        x = self.enc(x, x_mask)
+        x = self.out_conv(x) * x_mask
+        return x
+
+    def remove_weight_norm(self):
+        self.enc.remove_weight_norm()
 
 
 class VariancePredictor(nn.Module):
@@ -73,8 +98,8 @@ class VariancePredictor(nn.Module):
         self.layers = nn.ModuleList([
             nn.Sequential(
                 nn.Conv1d(in_channels if i == 0 else channels, channels, kernel_size, padding=kernel_size // 2),
-                nn.GELU(),
                 LayerNorm(channels),
+                nn.GELU(),
                 nn.Dropout(dropout)
             ) for i in range(n_layers)
         ])

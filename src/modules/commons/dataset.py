@@ -11,7 +11,7 @@ class AudioDataset(Dataset):
     def __init__(self, params):
         super().__init__()
         self.data = list(sorted(Path(params.data_dir).glob('data_*.pt')))
-        self.stats = torch.load(f'{params.data_dir}/stat.pt')
+        self.stats = torch.load(f'{params.data_dir}/stats.pt')
         self.tokenizer = Tokenizer()
 
     def __len__(self):
@@ -27,12 +27,12 @@ class AudioDataset(Dataset):
             pitch,
             energy
         ) = torch.load(self.data[idx])
-        label = self.tokenizer(inputs)
+        phoneme, accent = self.tokenizer(inputs)
         duration = duration.float()
         pitch = (pitch - self.stats['pitch_mean']) / self.stats['pitch_std']
         energy = (energy - self.stats['energy_mean']) / self.stats['energy_std']
         return (
-            label,
+            phoneme, accent,
             wav.squeeze(),
             spec.transpose(-1, -2),
             mel.transpose(-1, -2),
@@ -44,7 +44,7 @@ class AudioDataset(Dataset):
 
 def collate_fn(batch):
     (
-        labels,
+        phoneme, accent,
         wav,
         spec,
         mel,
@@ -53,8 +53,9 @@ def collate_fn(batch):
         energy
     ) = tuple(zip(*batch))
 
-    x_length = torch.LongTensor([len(x) for x in labels])
-    x = pad_sequence(labels, batch_first=True)
+    x_length = torch.LongTensor([len(x) for x in phoneme])
+    phoneme = pad_sequence(phoneme, batch_first=True)
+    accent = pad_sequence(accent, batch_first=True)
 
     y_length = torch.LongTensor([x.size(0) for x in mel])
     spec = pad_sequence(spec, batch_first=True).transpose(-1, -2)
@@ -67,7 +68,7 @@ def collate_fn(batch):
     duration = pad_sequence(duration, batch_first=True).transpose(-1, -2)
 
     return (
-        x,
+        phoneme, accent,
         x_length,
         wav,
         spec,

@@ -90,6 +90,7 @@ class PreProcessor:
 
             if i < 3:
                 print(wav.size())
+                print(spec.size())
                 print(mel.size())
                 print(label)
                 print(duration)
@@ -111,7 +112,7 @@ class PreProcessor:
             'pitch_std': np.sqrt(s_p.var_),
             'energy_mean': s_e.mean_,
             'energy_std': np.sqrt(s_e.var_)
-        }, self.output_dir / f'stat.pt')
+        }, self.output_dir / f'stats.pt')
 
     def run(self):
         print('Start Preprocessing')

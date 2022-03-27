@@ -2,12 +2,9 @@ seed: 42
 output_dir: ./out/base
 
 preprocess:
-  mode: normal
-  tokenizer:
-    mode: ${mode}
   wav_dir: /disk/fs1/Corpus/JSUT/jsut_ver1.1/basic5000/wav
   label_dir: /disk/fs1/Corpus/JSUT/jsut-label/labels/basic5000
-  output_dir: ../dataset/${mode}
+  output_dir: ../dataset/pp_add
   orig_sr: 48000
   new_sr: 24000
   spec: ${spec}
@@ -33,12 +30,12 @@ mel:
 
 train:
   batch_size: 16
-  num_epochs: 3000
-  save_interval: 500
+  num_epochs: 500
+  save_interval: 250
 
 data:
   mode: all
-  data_dir: ../../vien/dataset/ttslearn
+  data_dir: ../dataset/pp_add
   valid_size: 100
 
 model:
