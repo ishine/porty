@@ -121,7 +121,7 @@ class Trainer:
         loss_mel = F.l1_loss(y_mel, y_hat_mel) * 45
         loss_fm = fm_loss(f_real, f_fake)
         loss_gen = generator_loss(fake)
-        loss_g = loss_gen + loss_fm + loss_mel + loss_dict['loss']
+        loss_g = loss_gen + loss_fm + loss_mel + loss_dict.pop('loss')
         if train:
             opt_g.zero_grad()
             loss_g.backward()
@@ -132,8 +132,8 @@ class Trainer:
             d=loss_d,
             g_gan=loss_gen,
             mel=loss_mel,
-            duration=loss_dict['duration'],
-            pitch=loss_dict['pitch']
+            fm=loss_fm,
+            **loss_dict
         )
 
     def save(self, config, epoch, g, d, opt_g, opt_d, fn):
