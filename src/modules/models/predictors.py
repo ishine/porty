@@ -72,12 +72,7 @@ class VarianceAdopter(nn.Module):
 class F0Predictor(nn.Module):
     def __init__(self, in_channels, channels, n_layers, kernel_size, dropout):
         super(F0Predictor, self).__init__()
-        self.in_conv = nn.Sequential(
-            nn.Conv1d(in_channels, channels, kernel_size, padding=kernel_size // 2),
-            LayerNorm(channels),
-            nn.GELU(),
-            nn.Dropout(dropout)
-        )
+        self.in_conv = nn.Conv1d(in_channels, channels, 1)
         self.enc = WN(channels, kernel_size, dilation_rate=1, n_layers=n_layers, p_dropout=dropout)
         self.out_conv = nn.Conv1d(channels, 1, 1)
 
