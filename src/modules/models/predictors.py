@@ -97,8 +97,8 @@ class VariancePredictor(nn.Module):
         self.layers = nn.ModuleList([
             nn.Sequential(
                 nn.Conv1d(in_channels if i == 0 else channels, channels, kernel_size, padding=kernel_size // 2),
-                LayerNorm(channels),
                 nn.GELU(),
+                LayerNorm(channels),
                 nn.Dropout(dropout)
             ) for i in range(n_layers)
         ])
