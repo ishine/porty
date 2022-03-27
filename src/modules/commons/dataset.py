@@ -37,8 +37,8 @@ class AudioDataset(Dataset):
             spec.transpose(-1, -2),
             mel.transpose(-1, -2),
             duration.transpose(-1, -2),
-            pitch.transpose(-1, -2),
-            energy.transpose(-1, -2)
+            pitch.float().transpose(-1, -2),
+            energy.float().transpose(-1, -2)
         )
 
 
@@ -66,7 +66,6 @@ def collate_fn(batch):
     pitch = pad_sequence(pitch, batch_first=True).transpose(-1, -2)
     energy = pad_sequence(energy, batch_first=True).transpose(-1, -2)
     duration = pad_sequence(duration, batch_first=True).transpose(-1, -2)
-    print(pitch.dtype)
 
     return (
         phoneme, accent,
