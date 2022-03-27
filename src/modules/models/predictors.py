@@ -83,7 +83,6 @@ class F0Predictor(nn.Module):
         x = self.enc(x, x_mask)
         pitch = self.out_conv(x) * x_mask
         vuv = torch.sigmoid(self.clf(x)) * x_mask
-        pitch = pitch * vuv
         return pitch, vuv
 
     def remove_weight_norm(self):
