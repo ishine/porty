@@ -2,8 +2,7 @@ import re
 import torch
 import numpy as np
 from nnmnkwii.io import hts
-from ttslearn.tacotron.frontend.openjtalk import numeric_feature_by_regex
-from ttslearn.tacotron.frontend.openjtalk import extra_symbols, phonemes
+from ttslearn.tacotron.frontend.openjtalk import numeric_feature_by_regex, extra_symbols, phonemes
 
 
 class Tokenizer:
