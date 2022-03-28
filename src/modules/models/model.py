@@ -64,8 +64,8 @@ class VITS(nn.Module):
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        x = self.stat_proj(x) * x_mask
-        m_p, logs_p = torch.chunk(x, 2, dim=1)
+        stats = self.stat_proj(x) * x_mask
+        m_p, logs_p = torch.chunk(stats, 2, dim=1)
 
         z, m_q, logs_q = self.posterior_encoder(spec, y_mask)
         z_p = self.flow(z, y_mask)
@@ -82,8 +82,10 @@ class VITS(nn.Module):
 
             path = maximum_path(logp, attn_mask.squeeze(1)).unsqueeze(1).detach()
 
-        x, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
+        m_p, logs_p, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
             x,
+            m_p,
+            logs_p,
             x_mask,
             path.squeeze(1)
         )

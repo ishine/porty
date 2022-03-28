@@ -20,12 +20,15 @@ class VarianceAdopter(nn.Module):
     def forward(
         self,
         x,
+        m,
+        logs,
         x_mask,
         path
     ):
         dur_pred = torch.relu(self.duration_predictor(x.detach(), x_mask))
-        x = self.length_regulator(x, path)
-        return x, dur_pred
+        m = self.length_regulator(m, path)
+        logs = self.length_regulator(logs, path)
+        return m, logs, dur_pred
 
     def infer(self, x, is_accent, x_mask):
         dur_pred = torch.relu(self.duration_predictor(x, x_mask))
