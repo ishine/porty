@@ -27,7 +27,7 @@ def validate(args, config):
     data_list = list(sorted(data_dir.glob('*.pt')))[:config.data.valid_size]
 
     tokenizer = Tokenizer()
-    to_mel = MelSpectrogram(**config.mel)
+    to_mel = MelSpectrogram(config.mel)
     stats = torch.load(data_dir / 'stats.pt')
 
     def save_fig(gen, gt, path):
