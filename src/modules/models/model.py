@@ -29,8 +29,8 @@ class VITS(nn.Module):
         self.generator = Generator(**params.generator)
 
     def forward(self, inputs):
-        label, x_length = inputs
-        x = self.emb(label)
+        phoneme, accent, x_length = inputs
+        x = self.emb(phoneme, accent)
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)

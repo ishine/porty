@@ -74,14 +74,15 @@ def validate(args, config):
             pitch,
             energy
         ) = torch.load(p)
-        x = tokenizer(inputs)
+        phoneme, accent = tokenizer(inputs)
         length = torch.LongTensor([len(inputs)])
 
-        x = x.unsqueeze(0).to(device)
+        phoneme = phoneme.unsqueeze(0).to(device)
+        accent = accent.unsqueeze(0).to(device)
         length = length.to(device)
 
         with torch.no_grad():
-            w, (pitch_pred, energy_pred) = model([x, length])
+            w, (pitch_pred, vuv_pred, energy_pred) = model([phoneme, accent, length])
             w = w.squeeze(1).detach().cpu()
             pitch_pred = pitch_pred.squeeze().detach().cpu().numpy()
             energy_pred = energy_pred.squeeze().detach().cpu().numpy()

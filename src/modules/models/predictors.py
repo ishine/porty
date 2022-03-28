@@ -60,7 +60,6 @@ class VarianceAdopter(nn.Module):
         x = self.length_regulator(x, path)
 
         pitch, vuv = self.pitch_predictor(x, y_mask)
-        pitch = pitch * vuv
         energy = self.energy_predictor(x, y_mask)
 
         x = x + pitch + energy
