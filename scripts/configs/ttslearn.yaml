@@ -33,7 +33,7 @@ train:
 
 data:
   mode: all
-  data_dir: ../dataset/pp_add
+  data_dir: ${preprocess.output_dir}
   valid_size: 100
 
 model:
