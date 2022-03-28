@@ -90,6 +90,7 @@ class Generator(torch.nn.Module):
         self.conv_post = nn.Conv1d(ch, 1, 7, 1, padding=3, bias=False)
 
     def forward(self, x, signal):
+        print(signal.size())
         conds = [signal]
         for pooler in reversed(self.poolers):
             signal = pooler(signal)
