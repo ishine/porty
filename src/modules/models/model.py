@@ -50,7 +50,7 @@ class VITS(nn.Module):
 
     def compute_loss(self, batch):
         (
-            phoneme, is_accent,
+            phoneme, _,
             x_length,
             _,
             spec,
