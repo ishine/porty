@@ -62,7 +62,6 @@ class VITS(nn.Module):
             energy
         ) = batch
         x = self.emb(phoneme)
-        is_accent = is_accent.unsqueeze(1)
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
