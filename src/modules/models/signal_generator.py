@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class SignalGenerator(nn.Module):
-    def __init__(self, stats_dir, sr, frame_shift, n_harmonic, alpha=0.1, sigma=0.003):
+    def __init__(self, stats_dir, sr, frame_shift, n_harmonic=6, alpha=0.1, sigma=0.003):
         super(SignalGenerator, self).__init__()
         stats = torch.load(f'{stats_dir}/stats.pt')
         self.f0_mean = float(stats['pitch_mean'])
@@ -24,7 +24,6 @@ class SignalGenerator(nn.Module):
     def restore(self, f0):
         return torch.exp(f0 * self.f0_std + self.f0_mean)
 
-    @torch.no_grad()
     def forward(self, f0, vuv):
         f0, vuv = self._preprocess(f0, vuv)
         output = 0
