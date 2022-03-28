@@ -5,14 +5,16 @@ import torch.nn as nn
 class SignalGenerator(nn.Module):
     def __init__(self, stats_dir, sr, frame_shift, alpha=0.1, sigma=0.003):
         super(SignalGenerator, self).__init__()
-        self.stats = torch.load(f'{stats_dir}/stats.pt')
+        stats = torch.load(f'{stats_dir}/stats.pt')
+        self.f0_mean = float(stats['pitch_mean'])
+        self.f0_std = float(stats['pitch_std'])
         self.sr = sr
         self.frame_shift = frame_shift
         self.alpha = alpha
         self.sigma = sigma
 
     def restore(self, f0):
-        return torch.exp(f0 * self.stats['pitch_std'] + self.stats['pitch_mean']).float()
+        return torch.exp(f0 * self.f0_std + self.f0_mean)
 
     @torch.no_grad()
     def forward(self, f0, vuv):
