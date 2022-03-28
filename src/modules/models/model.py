@@ -66,7 +66,7 @@ class VITS(nn.Module):
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        stats = self.stat_proj(x) * y_mask
+        stats = self.stat_proj(x) * x_mask
 
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
