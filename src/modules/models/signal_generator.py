@@ -19,14 +19,15 @@ class SignalGenerator(nn.Module):
         phi[0] = 0
         self.register_buffer('phi', phi)
 
-        self.amplitude = nn.Parameter(torch.ones(self.n_harmonic + 1), requires_grad=True)
+        self.amplitude = nn.Parameter(torch.ones(self.n_harmonic), requires_grad=True)
+        self.bias = nn.Parameter(torch.zeros(1), requires_grad=True)
 
     def forward(self, f0, vuv):
         f0, vuv = self._preprocess(f0, vuv)
         output = 0
         for i in range(self.n_harmonic):
             output += self.amplitude[i] * self._signal(f0 * (i+1), vuv, self.phi[i])
-        output = torch.tanh(output + self.amplitude[self.n_harmonic])
+        output = torch.tanh(output + self.bias)
         return output
 
     def restore(self, f0):
