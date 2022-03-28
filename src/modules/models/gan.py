@@ -92,9 +92,9 @@ class Generator(torch.nn.Module):
     def forward(self, x, signal):
         conds = [signal]
         for pooler in reversed(self.poolers):
-            c = pooler(signal)
-            conds.insert(0, c)
-            print(c.size())
+            signal = pooler(signal)
+            conds.insert(0, signal)
+            print(signal.size())
         x = self.conv_pre(x)
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, LRELU_SLOPE)
