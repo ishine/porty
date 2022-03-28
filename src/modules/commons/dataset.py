@@ -11,7 +11,6 @@ class AudioDataset(Dataset):
     def __init__(self, params):
         super().__init__()
         self.data = list(sorted(Path(params.data_dir).glob('data_*.pt')))
-        self.stats = torch.load(f'{params.data_dir}/stats.pt')
         self.tokenizer = Tokenizer()
 
     def __len__(self):
@@ -23,24 +22,14 @@ class AudioDataset(Dataset):
             spec,
             mel,
             inputs,
-            duration,
-            pitch,
-            energy
+            *_
         ) = torch.load(self.data[idx])
         phoneme, is_accent = self.tokenizer(inputs)
-        duration = duration.float()
-        vuv = (pitch != 0).float()
-        pitch = (pitch - self.stats['pitch_mean']) / self.stats['pitch_std']
-        energy = (energy - self.stats['energy_mean']) / self.stats['energy_std']
         return (
             phoneme, is_accent,
             wav.squeeze(),
             spec.transpose(-1, -2),
-            mel.transpose(-1, -2),
-            duration.transpose(-1, -2),
-            pitch.float().transpose(-1, -2),
-            vuv.transpose(-1, -2),
-            energy.float().transpose(-1, -2)
+            mel.transpose(-1, -2)
         )
 
 
@@ -49,11 +38,7 @@ def collate_fn(batch):
         phoneme, is_accent,
         wav,
         spec,
-        mel,
-        duration,
-        pitch,
-        vuv,
-        energy
+        mel
     ) = tuple(zip(*batch))
 
     x_length = torch.LongTensor([len(x) for x in phoneme])
@@ -66,20 +51,11 @@ def collate_fn(batch):
 
     wav = pad_sequence(wav, batch_first=True).unsqueeze(1)
 
-    pitch = pad_sequence(pitch, batch_first=True).transpose(-1, -2)
-    vuv = pad_sequence(vuv, batch_first=True).transpose(-1, -2)
-    energy = pad_sequence(energy, batch_first=True).transpose(-1, -2)
-    duration = pad_sequence(duration, batch_first=True).transpose(-1, -2)
-
     return (
         phoneme, is_accent,
         x_length,
         wav,
         spec,
         mel,
-        y_length,
-        duration,
-        pitch,
-        vuv,
-        energy
+        y_length
     )

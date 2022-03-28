@@ -16,37 +16,16 @@ class VarianceAdopter(nn.Module):
             dropout=dropout
         )
         self.length_regulator = LengthRegulator()
-        self.pitch_predictor = F0Predictor(
-            in_channels=in_channels,
-            channels=channels,
-            n_layers=5,
-            kernel_size=5,
-            dropout=dropout
-        )
-        self.energy_predictor = VariancePredictor(
-            in_channels=in_channels,
-            channels=channels,
-            n_layers=2,
-            kernel_size=3,
-            dropout=dropout
-        )
 
     def forward(
         self,
         x,
         x_mask,
-        y_mask,
-        pitch,
-        energy,
         path
     ):
         dur_pred = torch.relu(self.duration_predictor(x.detach(), x_mask))
         x = self.length_regulator(x, path)
-        pitch_pred, vuv = self.pitch_predictor(x, y_mask)
-        energy_pred = self.energy_predictor(x, y_mask)
-
-        x = x + pitch + energy
-        return x, (dur_pred, pitch_pred, vuv, energy_pred)
+        return x, dur_pred
 
     def infer(self, x, is_accent, x_mask):
         dur_pred = torch.relu(self.duration_predictor(x, x_mask))
@@ -59,12 +38,7 @@ class VarianceAdopter(nn.Module):
         path = generate_path(dur_pred.squeeze(1), attn_mask.squeeze(1))
 
         x = self.length_regulator(x, path)
-
-        pitch, vuv = self.pitch_predictor(x, y_mask)
-        energy = self.energy_predictor(x, y_mask)
-
-        x = x + pitch + energy
-        return x, y_mask, (pitch, vuv, energy)
+        return x, y_mask
 
     def remove_weight_norm(self):
         self.pitch_predictor.remove_weight_norm()

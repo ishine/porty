@@ -77,10 +77,6 @@ class Generator(torch.nn.Module):
                 nn.ConvTranspose1d(upsample_initial_channel // (2 ** i), upsample_initial_channel // (2 ** (i + 1)),
                                    k, u, padding=(k - u) // 2)))
 
-        self.poolers = nn.ModuleList()
-        for i in range(1, self.num_upsamples):
-            self.poolers.append(nn.AvgPool1d(upsample_rates[i], upsample_rates[i]))
-
         self.resblocks = nn.ModuleList()
         for i in range(len(self.ups)):
             ch = upsample_initial_channel // (2 ** (i + 1))
@@ -89,16 +85,11 @@ class Generator(torch.nn.Module):
 
         self.conv_post = nn.Conv1d(ch, 1, 7, 1, padding=3, bias=False)
 
-    def forward(self, x, signal):
-        conds = [signal]
-        for pooler in reversed(self.poolers):
-            signal = pooler(signal)
-            conds.insert(0, signal)
+    def forward(self, x):
         x = self.conv_pre(x)
         for i in range(self.num_upsamples):
             x = F.leaky_relu(x, LRELU_SLOPE)
             x = self.ups[i](x)
-            x += conds[i]
             xs = None
             for j in range(self.num_kernels):
                 if xs is None:

@@ -1,3 +1,5 @@
+import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,9 +11,10 @@ from .flow import Flow
 from .posterior_encoder import PosteriorEncoder
 from .signal_generator import SignalGenerator
 from .gan import Generator
+from .monotonic_align import maximum_path
 
 from .loss import kl_loss
-from .utils import sequence_mask, generate_path, rand_slice_segments, slice_segments
+from .utils import sequence_mask, rand_slice_segments
 
 
 class VITS(nn.Module):
@@ -22,12 +25,10 @@ class VITS(nn.Module):
         self.emb = EmbeddingLayer(**params.embedding)
         self.encoder = Transformer(**params.encoder)
         self.va = VarianceAdopter(**params.va)
-        self.decoder = Transformer(**params.encoder)
         self.stat_proj = nn.Conv1d(params.encoder.channels, params.encoder.channels * 2, 1)
 
         self.flow = Flow(**params.flow)
         self.posterior_encoder = PosteriorEncoder(**params.posterior_encoder)
-        self.signal_generator = SignalGenerator(**params.signal_generator)
         self.generator = Generator(**params.generator)
 
     def forward(self, inputs):
@@ -55,56 +56,51 @@ class VITS(nn.Module):
             spec,
             _,
             y_length,
-            duration,
-            pitch,
-            vuv,
-            energy
+            *_
         ) = batch
         x = self.emb(phoneme)
-        is_accent = is_accent.unsqueeze(1)
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
+        x = self.stat_proj(x) * x_mask
+        m_p, logs_p = torch.chunk(x, 2, dim=1)
+
+        z, m_q, logs_q = self.posterior_encoder(spec, y_mask)
+        z_p = self.flow(z, y_mask)
+
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
-        path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
+
+        with torch.no_grad():
+            x_s_sq_r = torch.exp(-2 * logs_p)
+            logp1 = torch.sum(-0.5 * math.log(2 * math.pi) - logs_p, [1]).unsqueeze(-1)  # [b, t, 1]
+            logp2 = torch.matmul(x_s_sq_r.transpose(1, 2), -0.5 * (z_p ** 2))  # [b, t, d] x [b, d, t'] = [b, t, t']
+            logp3 = torch.matmul((m_p * x_s_sq_r).transpose(1, 2), z_p)  # [b, t, d] x [b, d, t'] = [b, t, t']
+            logp4 = torch.sum(-0.5 * (m_p ** 2) * x_s_sq_r, [1]).unsqueeze(-1)  # [b, t, 1]
+            logp = logp1 + logp2 + logp3 + logp4  # [b, t, t']
+
+            path = maximum_path(logp, attn_mask.squeeze(1)).unsqueeze(1).detach()
+
         x, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
             x,
             x_mask,
-            y_mask,
-            pitch,
-            energy,
-            path
+            path.squeeze(1)
         )
-        x = self.decoder(x, y_mask)
-        x = self.stat_proj(x) * y_mask
-        m_p, logs_p = torch.chunk(x, 2, dim=1)
-        z, mu_q, logs_q = self.posterior_encoder(spec, y_mask)
-
-        z_p = self.flow(z, y_mask)
+        duration = path.sum(dim=-1).add(1e-5).log()
 
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
-        duration_mask = (duration != 0).float()
-        duration_loss = ((dur_pred - duration.add(1e-5).log()) * duration_mask).pow(2).sum() / torch.sum(x_length)
-        pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
-        vuv_loss = F.binary_cross_entropy(vuv_pred, vuv, reduction='sum') / torch.sum(y_length)
-        energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)
-        loss = _kl_loss + duration_loss + pitch_loss + vuv_loss + energy_loss
+        duration_loss = (dur_pred - duration).pow(2).sum() / torch.sum(x_length)
+        loss = _kl_loss + duration_loss
 
         loss_dict = dict(
             loss=loss,
             kl_loss=_kl_loss,
-            duration=duration_loss,
-            pitch=pitch_loss,
-            energy=energy_loss
+            duration=duration_loss
         )
 
         z_slice, ids_slice = rand_slice_segments(z_p, y_length, self.segment_size)
-        pitch = slice_segments(pitch, ids_slice, self.segment_size)
-        vuv = slice_segments(vuv, ids_slice, self.segment_size)
-        signal = self.signal_generator(pitch, vuv)
-        o = self.generator(z_slice, signal)
+        o = self.generator(z_slice)
 
         return o, ids_slice, loss_dict
 
