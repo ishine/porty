@@ -85,7 +85,8 @@ class VITS(nn.Module):
         z_p = self.flow(z, y_mask)
 
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
-        duration_loss = ((dur_pred - duration.add(1e-5).log()) * is_accent).pow(2).sum() / torch.sum(x_length)
+        duration_mask = (duration != 0).float()
+        duration_loss = ((dur_pred - duration.add(1e-5).log()) * duration_mask).pow(2).sum() / torch.sum(x_length)
         pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
         vuv_loss = F.binary_cross_entropy(vuv_pred, vuv, reduction='sum') / torch.sum(y_length)
         energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)
