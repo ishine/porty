@@ -82,7 +82,7 @@ class VITS(nn.Module):
 
             path = maximum_path(logp, attn_mask.squeeze(1)).unsqueeze(1).detach()
 
-        m_p, logs_p, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
+        m_p, logs_p, dur_pred = self.va(
             x,
             m_p,
             logs_p,
