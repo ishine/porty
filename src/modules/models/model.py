@@ -33,8 +33,6 @@ class VITS(nn.Module):
         x = self.emb(phoneme, accent)
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
-        print(x.size())
-
         x = self.encoder(x, x_mask)
         x, y_mask, preds = self.va.infer(x, x_mask)
         x = self.decoder(x, y_mask)

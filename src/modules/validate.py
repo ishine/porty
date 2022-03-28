@@ -75,7 +75,7 @@ def validate(args, config):
             energy
         ) = torch.load(p)
         phoneme, accent = tokenizer(inputs)
-        length = torch.LongTensor([len(inputs)])
+        length = torch.LongTensor([phoneme.size(-1)])
 
         phoneme = phoneme.unsqueeze(0).to(device)
         accent = accent.unsqueeze(0).to(device)
