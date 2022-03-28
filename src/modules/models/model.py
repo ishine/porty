@@ -2,19 +2,16 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from .layers import EmbeddingLayer
 from .transformer import Transformer
 from .predictors import VarianceAdopter
 from .flow import Flow
 from .posterior_encoder import PosteriorEncoder
-from .signal_generator import SignalGenerator
 from .gan import Generator
-from .monotonic_align import maximum_path
 
 from .loss import kl_loss
-from .utils import sequence_mask, rand_slice_segments
+from .utils import sequence_mask, generate_path, rand_slice_segments
 
 
 class VITS(nn.Module):
@@ -56,7 +53,7 @@ class VITS(nn.Module):
             spec,
             _,
             y_length,
-            *_
+            duration
         ) = batch
         x = self.emb(phoneme)
 
@@ -71,28 +68,19 @@ class VITS(nn.Module):
         z_p = self.flow(z, y_mask)
 
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
-
-        with torch.no_grad():
-            x_s_sq_r = torch.exp(-2 * logs_p)
-            logp1 = torch.sum(-0.5 * math.log(2 * math.pi) - logs_p, [1]).unsqueeze(-1)  # [b, t, 1]
-            logp2 = torch.matmul(x_s_sq_r.transpose(1, 2), -0.5 * (z_p ** 2))  # [b, t, d] x [b, d, t'] = [b, t, t']
-            logp3 = torch.matmul((m_p * x_s_sq_r).transpose(1, 2), z_p)  # [b, t, d] x [b, d, t'] = [b, t, t']
-            logp4 = torch.sum(-0.5 * (m_p ** 2) * x_s_sq_r, [1]).unsqueeze(-1)  # [b, t, 1]
-            logp = logp1 + logp2 + logp3 + logp4  # [b, t, t']
-
-            path = maximum_path(logp, attn_mask.squeeze(1)).unsqueeze(1).detach()
+        path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
 
         m_p, logs_p, dur_pred = self.va(
             x,
             m_p,
             logs_p,
             x_mask,
-            path.squeeze(1)
+            path
         )
-        duration = path.sum(dim=-1).add(1e-5).log()
 
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
-        duration_loss = (dur_pred - duration).pow(2).sum() / torch.sum(x_length)
+        duration_mask = (duration != 0).float()
+        duration_loss = ((dur_pred - duration.add(1e-5).log()) * duration_mask).pow(2).sum() / torch.sum(x_length)
         loss = _kl_loss + duration_loss
 
         loss_dict = dict(

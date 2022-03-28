@@ -22,6 +22,7 @@ class AudioDataset(Dataset):
             spec,
             mel,
             inputs,
+            duration,
             *_
         ) = torch.load(self.data[idx])
         phoneme, is_accent = self.tokenizer(inputs)
@@ -29,7 +30,8 @@ class AudioDataset(Dataset):
             phoneme, is_accent,
             wav.squeeze(),
             spec.transpose(-1, -2),
-            mel.transpose(-1, -2)
+            mel.transpose(-1, -2),
+            duration.float().transpose(-1, -2),
         )
 
 
@@ -38,7 +40,8 @@ def collate_fn(batch):
         phoneme, is_accent,
         wav,
         spec,
-        mel
+        mel,
+        duration
     ) = tuple(zip(*batch))
 
     x_length = torch.LongTensor([len(x) for x in phoneme])
@@ -48,6 +51,7 @@ def collate_fn(batch):
     y_length = torch.LongTensor([x.size(0) for x in mel])
     spec = pad_sequence(spec, batch_first=True).transpose(-1, -2)
     mel = pad_sequence(mel, batch_first=True).transpose(-1, -2)
+    duration = pad_sequence(duration, batch_first=True).transpose(-1, -2)
 
     wav = pad_sequence(wav, batch_first=True).unsqueeze(1)
 
@@ -57,5 +61,6 @@ def collate_fn(batch):
         wav,
         spec,
         mel,
-        y_length
+        y_length,
+        duration
     )
