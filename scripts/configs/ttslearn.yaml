@@ -1,5 +1,5 @@
 seed: 42
-output_dir: ./out/ttslearn
+output_dir: ./out/ttslearn_base
 
 preprocess:
   wav_dir: /disk/fs1/Corpus/JSUT/jsut_ver1.1/basic5000/wav
@@ -33,7 +33,7 @@ train:
 
 data:
   mode: all
-  data_dir: ${preprocess.output_dir}
+  data_dir: ../../porty_2/dataset/ttslearn
   valid_size: 100
 
 model:
