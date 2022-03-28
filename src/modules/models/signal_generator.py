@@ -26,11 +26,9 @@ class SignalGenerator(nn.Module):
 
     def forward(self, f0, vuv):
         f0, vuv = self._preprocess(f0, vuv)
-        print(f0.size(), vuv.size())
         output = 0
         for i in range(self.n_harmonic):
             output += self.amplitude[i] * self._signal(f0 * (i+1), vuv, self.phi[i])
-            print(output.size())
         output = torch.tanh(output + self.amplitude[self.n_harmonic])
         return output
 
@@ -38,6 +36,8 @@ class SignalGenerator(nn.Module):
     def _preprocess(self, f0, vuv):
         f0 = self.restore(f0)
         f0 *= vuv
+        f0 = torch.repeat_interleave(f0, self.frame_shift, dim=-1)
+        vuv = torch.repeat_interleave(vuv, self.frame_shift, dim=-1)
         return f0, vuv
 
     def _signal(self, f0, vuv, phi):
