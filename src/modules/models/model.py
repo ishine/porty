@@ -100,8 +100,8 @@ class VITS(nn.Module):
         )
 
         z_slice, ids_slice = rand_slice_segments(z_p, y_length, self.segment_size)
-        pitch = slice_segments(pitch, y_length, self.segment_size)
-        vuv = slice_segments(vuv, y_length, self.segment_size)
+        pitch = slice_segments(pitch, ids_slice, self.segment_size)
+        vuv = slice_segments(vuv, ids_slice, self.segment_size)
         signal = self.signal_generator(pitch, vuv)
         o = self.generator(z_slice, signal)
 

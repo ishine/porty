@@ -75,6 +75,7 @@ model:
     n_layers: 16
 
   signal_generator:
+    stats_dir: ${data.data_dir}
     sr: ${preprocess.new_sr}
     frame_shift: ${spec.hop_length}
 
