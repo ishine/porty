@@ -7,10 +7,11 @@ from .transformer import Transformer
 from .predictors import VarianceAdopter
 from .flow import Flow
 from .posterior_encoder import PosteriorEncoder
+from .signal_generator import SignalGenerator
 from .gan import Generator
 
 from .loss import kl_loss
-from .utils import sequence_mask, generate_path, rand_slice_segments
+from .utils import sequence_mask, generate_path, rand_slice_segments, slice_segments
 
 
 class VITS(nn.Module):
@@ -26,6 +27,7 @@ class VITS(nn.Module):
 
         self.flow = Flow(**params.flow)
         self.posterior_encoder = PosteriorEncoder(**params.posterior_encoder)
+        self.signal_generator = SignalGenerator(**params.signal_generator)
         self.generator = Generator(**params.generator)
 
     def forward(self, inputs):
@@ -98,7 +100,10 @@ class VITS(nn.Module):
         )
 
         z_slice, ids_slice = rand_slice_segments(z_p, y_length, self.segment_size)
-        o = self.generator(z_slice)
+        pitch = slice_segments(pitch, y_length, self.segment_size)
+        vuv = slice_segments(vuv, y_length, self.segment_size)
+        signal = self.signal_generator(pitch, vuv)
+        o = self.generator(z_slice, signal)
 
         return o, ids_slice, loss_dict
 
