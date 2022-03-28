@@ -14,7 +14,6 @@ spec:
   n_fft: 1024
   win_length: 1024
   hop_length: 256
-  pad: 384
   center: false
 
 mel:
@@ -24,7 +23,6 @@ mel:
   hop_length: ${spec.hop_length}
   f_min: 0
   f_max: 8000
-  pad: ${spec.pad}
   n_mels: 80
   center: ${spec.center}
 

@@ -24,8 +24,8 @@ class PreProcessor:
         self.output_dir = Path(config.output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-        self.to_spec = Spectrogram(**config.spec)
-        self.to_mel = MelSpectrogramWithEnergy(**config.mel)
+        self.to_spec = Spectrogram(config.spec)
+        self.to_mel = MelSpectrogramWithEnergy(config.mel)
 
         self.tokenizer = Tokenizer()
 
