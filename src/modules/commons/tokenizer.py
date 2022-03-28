@@ -1,34 +1,46 @@
-import re
 import torch
 import numpy as np
 from nnmnkwii.io import hts
-from ttslearn.tacotron.frontend.openjtalk import numeric_feature_by_regex, extra_symbols, phonemes
+from ttslearn.tacotron.frontend.openjtalk import pp_symbols
+from ttslearn.tacotron.frontend.openjtalk import extra_symbols, num_vocab, _symbol_to_id
 
 
 class Tokenizer:
     def __init__(self):
-        self.phoneme_dict = {s: i for i, s in enumerate(['<pad>'] + phonemes)}
-        self.accent_dict = {s: i for i, s in enumerate(['<pad>'] + extra_symbols)}
+        self.extra_symbol_set = set(extra_symbols)
 
     def __call__(self, *args, **kwargs):
         return self.tokenize(*args, **kwargs)
 
-    def tokenize(self, inputs):
-        phoneme, accent = inputs
-        phoneme = [self.phoneme_dict[s] for s in phoneme]
-        accent = [self.accent_dict[s] for s in accent]
-        return torch.LongTensor(phoneme), torch.LongTensor(accent)
+    def tokenize(self, text):
+        inp = list()
+        is_extra = list()
+        for s in text:
+            inp.append(_symbol_to_id[s])
+            if s in self.extra_symbol_set:
+                is_extra.append(1)
+            else:
+                is_extra.append(0)
+        return torch.LongTensor(inp), torch.FloatTensor(is_extra)
 
     def __len__(self):
-        return len(self.phoneme_dict) + len(self.accent_dict)
+        return num_vocab()
 
     def extract(self, label_path, sr, y_length):
         label = hts.load(label_path)
-        phoneme, prosody = self.pp_symbols(label.contexts)
-        assert len(phoneme) == len(prosody)
+        phoneme = pp_symbols(label.contexts)
 
         duration = self.extract_duration(label, sr, y_length)
-        return (phoneme, prosody), duration
+        final_duration = list()
+        i = 0
+        for p in phoneme:
+            if p != '_' and p in self.extra_symbol_set:
+                final_duration.append(0)
+            else:
+                final_duration.append(duration[i])
+                i += 1
+        assert len(phoneme) == len(final_duration)
+        return phoneme, final_duration
 
     def extract_duration(self, label, sr, y_length):
         duration = list()
@@ -50,39 +62,3 @@ class Tokenizer:
             if diff_rest == 0:
                 break
         return duration_floor
-
-    @staticmethod
-    def pp_symbols(labels, drop_unvoiced_vowels=True):
-        phoneme, accent = list(), list()
-        N = len(labels)
-        for n in range(N):
-            lab_curr = labels[n]
-
-            p3 = re.search(r"\-(.*?)\+", lab_curr).group(1)
-
-            if drop_unvoiced_vowels and p3 in "AEIOU":
-                p3 = p3.lower()
-
-            if p3 == "sil":
-                continue
-            else:
-                phoneme.append(p3)
-
-            a1 = numeric_feature_by_regex(r"/A:([0-9\-]+)\+", lab_curr)
-            a2 = numeric_feature_by_regex(r"\+(\d+)\+", lab_curr)
-            a3 = numeric_feature_by_regex(r"\+(\d+)/", lab_curr)
-
-            f1 = numeric_feature_by_regex(r"/F:(\d+)_", lab_curr)
-
-            a2_next = numeric_feature_by_regex(r"\+(\d+)\+", labels[n + 1])
-
-            if a3 == 1 and a2_next == 1:
-                accent.append("#")
-            elif a1 == 0 and a2_next == a2 + 1 and a2 != f1:
-                accent.append("]")
-            elif a2 == 1 and a2_next == 2:
-                accent.append("[")
-            else:
-                accent.append('_')
-
-        return phoneme, accent

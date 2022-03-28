@@ -29,12 +29,13 @@ class VITS(nn.Module):
         self.generator = Generator(**params.generator)
 
     def forward(self, inputs):
-        phoneme, accent, x_length = inputs
-        x = self.emb(phoneme, accent)
+        phoneme, is_accent, x_length = inputs
+        x = self.emb(phoneme)
+        is_accent = is_accent.unsqueeze(1)
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        x, y_mask, preds = self.va.infer(x, x_mask)
+        x, y_mask, preds = self.va.infer(x, is_accent, x_mask)
         x = self.decoder(x, y_mask)
         x = self.stat_proj(x) * y_mask
 
@@ -46,7 +47,7 @@ class VITS(nn.Module):
 
     def compute_loss(self, batch):
         (
-            phoneme, accent,
+            phoneme, is_accent,
             x_length,
             _,
             spec,
@@ -57,7 +58,8 @@ class VITS(nn.Module):
             vuv,
             energy
         ) = batch
-        x = self.emb(phoneme, accent)
+        x = self.emb(phoneme)
+        is_accent = is_accent.unsqueeze(1)
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
@@ -81,7 +83,7 @@ class VITS(nn.Module):
         z_p = self.flow(z, y_mask)
 
         _kl_loss = kl_loss(z_p, logs_q, m_p, logs_p, y_mask)
-        duration_loss = ((dur_pred - duration.add(1e-5).log()) * x_mask).pow(2).sum() / torch.sum(x_length)
+        duration_loss = ((dur_pred - duration.add(1e-5).log()) * is_accent).pow(2).sum() / torch.sum(x_length)
         pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
         vuv_loss = F.binary_cross_entropy(vuv_pred, vuv, reduction='sum') / torch.sum(y_length)
         energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)

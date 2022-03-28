@@ -44,8 +44,7 @@ model:
   mel_segment: 32
 
   embedding:
-    n_phoneme: 45
-    n_prosody: 8
+    n_phoneme: 52
     channels: ${model.channels}
 
   encoder:
