@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 
@@ -27,7 +28,7 @@ class SignalGenerator(nn.Module):
 
     def _signal(self, f0, vuv):
         noise = torch.randn_like(f0) * self.sigma
-        e_v = self.alpha * torch.sin(torch.cumsum(2. * torch.pi * f0 / self.sr, dim=-1)) + noise
+        e_v = self.alpha * torch.sin(torch.cumsum(2. * math.pi * f0 / self.sr, dim=-1)) + noise
         e_uv = self.alpha / (3. * self.sigma) * noise
         sig = e_v * vuv + e_uv * (-vuv + 1)
         return sig
