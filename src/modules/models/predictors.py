@@ -33,6 +33,7 @@ class VarianceAdopter(nn.Module):
         path
     ):
         dur_pred = torch.relu(self.duration_predictor(x.detach(), x_mask))
+        x = self.length_regulator(x, path)
         stats = self.length_regulator(stats, path)
         pitch_pred, vuv = self.pitch_predictor(x, y_mask)
         return stats, (dur_pred, pitch_pred, vuv)
