@@ -4,7 +4,7 @@ output_dir: ./out/pp_add
 preprocess:
   wav_dir: /disk/fs1/Corpus/JSUT/jsut_ver1.1/basic5000/wav
   label_dir: /disk/fs1/Corpus/JSUT/jsut-label/labels/basic5000
-  output_dir: ../dataset/pp_add
+  output_dir: ../dataset/ttslearn
   orig_sr: 48000
   new_sr: 24000
   spec: ${spec}
