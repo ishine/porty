@@ -22,7 +22,6 @@ class VITS(nn.Module):
         self.emb = EmbeddingLayer(**params.embedding)
         self.encoder = Transformer(**params.encoder)
         self.va = VarianceAdopter(**params.va)
-        self.decoder = Transformer(**params.encoder)
         self.stat_proj = nn.Conv1d(params.encoder.channels, params.encoder.channels * 2, 1)
 
         self.flow = Flow(**params.flow)
@@ -37,7 +36,7 @@ class VITS(nn.Module):
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        x, y_mask, (pitch, vuv, energy) = self.va.infer(x, is_accent, x_mask)
+        x, y_mask, (pitch, vuv) = self.va.infer(x, is_accent, x_mask)
         x = self.decoder(x, y_mask)
         x = self.stat_proj(x) * y_mask
 
@@ -46,7 +45,7 @@ class VITS(nn.Module):
         z = self.flow.backward(z_p, y_mask)
         signal = self.signal_generator(pitch, vuv)
         y = self.generator(z, signal)
-        return y, (pitch, vuv, energy)
+        return y, (pitch, vuv)
 
     def compute_loss(self, batch):
         (
@@ -59,28 +58,26 @@ class VITS(nn.Module):
             duration,
             pitch,
             vuv,
-            energy
+            _
         ) = batch
         x = self.emb(phoneme)
-        is_accent = is_accent.unsqueeze(1)
 
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
+        stats = self.stat_proj(x) * y_mask
+
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
-        x, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
+        stats, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
             x,
+            stats,
             x_mask,
             y_mask,
-            pitch,
-            energy,
             path
         )
-        x = self.decoder(x, y_mask)
-        x = self.stat_proj(x) * y_mask
-        m_p, logs_p = torch.chunk(x, 2, dim=1)
+        m_p, logs_p = torch.chunk(stats, 2, dim=1)
         z, mu_q, logs_q = self.posterior_encoder(spec, y_mask)
 
         z_p = self.flow(z, y_mask)
@@ -90,15 +87,13 @@ class VITS(nn.Module):
         duration_loss = ((dur_pred - duration.add(1e-5).log()) * duration_mask).pow(2).sum() / torch.sum(x_length)
         pitch_loss = (pitch_pred - pitch).pow(2).sum() / torch.sum(y_length)
         vuv_loss = F.binary_cross_entropy(vuv_pred, vuv, reduction='sum') / torch.sum(y_length)
-        energy_loss = (energy_pred - energy).pow(2).sum() / torch.sum(y_length)
-        loss = _kl_loss + duration_loss + pitch_loss + vuv_loss + energy_loss
+        loss = _kl_loss + duration_loss + pitch_loss + vuv_loss
 
         loss_dict = dict(
             loss=loss,
             kl_loss=_kl_loss,
             duration=duration_loss,
-            pitch=pitch_loss,
-            energy=energy_loss
+            pitch=pitch_loss
         )
 
         z_slice, ids_slice = rand_slice_segments(z_p, y_length, self.segment_size)
