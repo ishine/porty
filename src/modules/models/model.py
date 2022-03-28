@@ -33,15 +33,14 @@ class VITS(nn.Module):
         x_mask = sequence_mask(x_length).unsqueeze(1).to(x.dtype)
 
         x = self.encoder(x, x_mask)
-        x, y_mask, preds = self.va.infer(x, is_accent, x_mask)
-        x = self.decoder(x, y_mask)
-        x = self.stat_proj(x) * y_mask
+        stats = self.stat_proj(x) * x_mask
+        m, logs = torch.chunk(stats, 2, dim=1)
+        m, logs, y_mask = self.va.infer(x, m, logs, is_accent, x_mask)
 
-        m, logs = torch.chunk(x, 2, dim=1)
         z_p = (m + torch.randn_like(m) * torch.exp(logs)) * y_mask
         z = self.flow.backward(z_p, y_mask)
         y = self.generator(z)
-        return y, preds
+        return y
 
     def compute_loss(self, batch):
         (

@@ -30,9 +30,9 @@ class VarianceAdopter(nn.Module):
         logs = self.length_regulator(logs, path)
         return m, logs, dur_pred
 
-    def infer(self, x, is_accent, x_mask):
+    def infer(self, x, m, logs, is_accent, x_mask):
         dur_pred = torch.relu(self.duration_predictor(x, x_mask))
-        accent_mask = (is_accent != 1).float()
+        accent_mask = (is_accent == 0).float()
         dur_pred = torch.round(torch.exp(dur_pred)) * accent_mask * x_mask
         y_length = torch.clamp_min(torch.sum(dur_pred, [1, 2]), 1).long()
         y_mask = sequence_mask(y_length).unsqueeze(1).to(x_mask.device)
@@ -40,8 +40,9 @@ class VarianceAdopter(nn.Module):
 
         path = generate_path(dur_pred.squeeze(1), attn_mask.squeeze(1))
 
-        x = self.length_regulator(x, path)
-        return x, y_mask
+        m = self.length_regulator(m, path)
+        logs = self.length_regulator(logs, path)
+        return m, logs, y_mask
 
     def remove_weight_norm(self):
         self.pitch_predictor.remove_weight_norm()
