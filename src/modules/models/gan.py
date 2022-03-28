@@ -78,7 +78,7 @@ class Generator(torch.nn.Module):
                                    k, u, padding=(k - u) // 2)))
 
         self.poolers = nn.ModuleList()
-        for i in range(self.num_upsamples):
+        for i in range(1, self.num_upsamples):
             self.poolers.append(nn.AvgPool1d(upsample_rates[i], upsample_rates[i]))
 
         self.resblocks = nn.ModuleList()
@@ -90,8 +90,7 @@ class Generator(torch.nn.Module):
         self.conv_post = nn.Conv1d(ch, 1, 7, 1, padding=3, bias=False)
 
     def forward(self, x, signal):
-        print(signal.size())
-        conds = list()
+        conds = [signal]
         for pooler in reversed(self.poolers):
             c = pooler(signal)
             conds.insert(0, c)
