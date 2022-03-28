@@ -70,7 +70,7 @@ class VITS(nn.Module):
 
         attn_mask = torch.unsqueeze(x_mask, -1) * torch.unsqueeze(y_mask, 2)
         path = generate_path(duration.squeeze(1), attn_mask.squeeze(1))
-        stats, (dur_pred, pitch_pred, vuv_pred, energy_pred) = self.va(
+        stats, (dur_pred, pitch_pred, vuv_pred) = self.va(
             x,
             stats,
             x_mask,
