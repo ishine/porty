@@ -31,7 +31,7 @@ class Trainer:
         self.generator = VITS(config.model).to(self.device)
         self.discriminator = MultiPeriodDiscriminator().to(self.device)
 
-        self.to_mel = MelSpectrogram(**config.mel).to(self.device)
+        self.to_mel = MelSpectrogram(config.mel).to(self.device)
 
     def run(self):
         seed_everything(self.config.seed)
