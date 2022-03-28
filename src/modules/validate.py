@@ -96,5 +96,5 @@ def validate(args, config):
 
         save_fig(m, mel, d / f'mel_gan.png')
         save_comp(pitch_pred, pitch.squeeze(), d / f'pitch.png')
-        save_comp(vuv_pred, (pitch != 0).astype('float32'), d / 'vuv.png')
+        save_comp(vuv_pred, (pitch != 0).squeeze().float(), d / 'vuv.png')
         save_comp(energy_pred, energy.squeeze(), d / f'energy.png')
